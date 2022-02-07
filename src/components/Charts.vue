@@ -52,6 +52,7 @@ export default {
         chartOptions() {
             return {
                 chart: {
+                    foreColor: '#ffffff',
                     id: this.selected_cc,
                     animations: {
                         enabled: false
@@ -61,7 +62,7 @@ export default {
                     },
                 },
                 stroke: {
-                    curve: 'smooth',
+                    curve: 'straight',
                     lineCap: 'round',
                     width: 2
                 },
@@ -83,7 +84,10 @@ export default {
                     axisTicks: {
                         show: true,
                     },
-                    tickAmount: 10
+                    tickAmount: 10,
+                    title: {
+                        text: 'USD',
+                    }
                 },{
                     decimalsInFloat: 0,
                     opposite: true,
@@ -93,8 +97,14 @@ export default {
                     axisTicks: {
                         show: true,
                     },
-                    tickAmount: 10
+                    tickAmount: 10,
+                    title: {
+                        text: 'Active Members',
+                    }
                 }],
+                legend: {
+                fontSize: "16px"
+                },
                 grid: {
                     show: false,
                 },
