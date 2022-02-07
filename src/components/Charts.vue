@@ -28,6 +28,7 @@ export default {
             cc_data: [],
             subr_data: [],
             interval: 'max',
+            loading: false,
             timeframes: {
                 '7D': 7,
                 '1M': 31,
@@ -54,8 +55,8 @@ export default {
         }
         else {console.log("Couldn't load subreddit list ");}
 
-        this.loadRedditData(this.selected_reddit);
-        this.loadCCData(this.selected_cc);
+        await this.loadRedditData(this.selected_reddit);
+        await this.loadCCData(this.selected_cc);
     },
     computed: {
         chartOptions() {
@@ -150,16 +151,20 @@ export default {
     },
     methods: {
         async loadRedditData(subreddit) {
+            this.loading = true
             const docRef = doc(db, "reddit", "doc", "history", subreddit);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {this.subr_data = process_time_series(docSnap.data());}
             else {console.log("Couldn't load subreddit data");}
+            this.loading = false
         },
         async loadCCData(crypto) {
+            this.loading = true
             const docRef = doc(db, "crypto", "doc", "history", this.cc[crypto]);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {this.cc_data = process_time_series(docSnap.data());}
             else {console.log("Couldn't load crypto data");}
+            this.loading = false
         },
         async randomize() {
             let random_cc = this.cc_list[Math.floor(this.cc_len * Math.random())]
@@ -177,7 +182,7 @@ export default {
 </script>
 
 <template>
-    <div class="flex pt-2 justify-center items-center gap-4">
+    <div class="flex pt-2 justify-center items-center gap-4 relative">
         <!-- Reddit Selection -->
         <Listbox as="div" v-model="selected_reddit">
             <ListboxButton class="py-1 px-3 rounded-lg bg-dark-400">r/{{selected_reddit}}</ListboxButton>
@@ -210,6 +215,11 @@ export default {
                 </ListboxOption>
             </ListboxOptions>
         </Listbox>
+
+        <svg v-if="loading" class="animate-spin absolute -right-9 h-5 w-5 text-violet-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
     </div>
     <!-- Data -->
     <apexchart
