@@ -5,7 +5,10 @@ import {
   ListboxOptions,
   ListboxOption,
 } from '@headlessui/vue'
-import VueApexCharts from "vue3-apexcharts";
+import VueApexCharts from "vue3-apexcharts"
+import { db } from "../firebase/firebaseinit"
+import { collection, getDoc, doc } from "firebase/firestore";
+import { process_time_series } from "../utils"
 export default {
     components: { 
         apexchart: VueApexCharts,
@@ -16,19 +19,43 @@ export default {
     },
     data() {
         return {
-            selected_reddit: 'r/CryptoCurrency',
-            selected_cc: 'BTC/USD',
-            reddits: ['r/CryptoCurrency', 'r/Bitcoin', 'r/ethereum', 'r/cardano'],
-            cc: ['BTC/USD', 'ETH/USD', 'GLM/USD', 'GRT/USD'],
-            data1: [30, 40, 35, 50, 49, 60, 70, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91],
-            data2: [30, 40, 35, 50, 49, 60, 70, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91]
+            selected_reddit: 'Bitcoin',
+            selected_cc: 'Bitcoin',
+            assoc_subr: null,
+            inde_subr: null,
+            cc: null,
+            cc_data: [],
+            subr_data: []
         }
+    },
+    async created() {
+        // Get list of cryptos
+        const docRef = doc(db, "assets", "cryptos");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {this.cc = docSnap.data();}
+        else {console.log("Couldn't load crypto list ");}
+        // Get list of cryptos
+        const docRef1 = doc(db, "assets", "associated_subreddits");
+        const docRef2 = doc(db, "assets", "independent_subreddits");
+        const docSnap1 = await getDoc(docRef1);
+        const docSnap2 = await getDoc(docRef2);
+        if (docSnap1.exists() && docSnap2.exists()) {
+            this.assoc_subr = docSnap1.data();
+            this.inde_subr = docSnap2.data();
+        }
+        else {console.log("Couldn't load subreddit list ");}
+
+        this.loadRedditData(this.selected_reddit);
+        this.loadCCData(this.selected_cc);
     },
     computed: {
         chartOptions() {
             return {
                 chart: {
                     id: this.selected_cc,
+                    animations: {
+                        enabled: false
+                    },
                     toolbar: {
                         show: false,
                     },
@@ -36,7 +63,7 @@ export default {
                 stroke: {
                     curve: 'smooth',
                     lineCap: 'round',
-                    width: 8
+                    width: 2
                 },
                 tooltip: {
                     enabled: true,
@@ -47,12 +74,9 @@ export default {
                 },
                 xaxis: {
                     type: 'datetime',
-                    categories: [1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 1999.6, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007],
                 },
                 yaxis: [{
-                    formatter: (val, index) => {
-                        return Math.round(val)
-                    },
+                    decimalsInFloat: 0,
                     axisBorder: {
                         show: true,
                     },
@@ -61,10 +85,8 @@ export default {
                     },
                     tickAmount: 10
                 },{
+                    decimalsInFloat: 0,
                     opposite: true,
-                    formatter: (val, index) => {
-                        return Math.round(val)
-                    },
                     axisBorder: {
                         show: true,
                     },
@@ -83,20 +105,28 @@ export default {
         series() {
             return [
                 {
-                    name: this.selected_reddit,
-                    data: this.data1,
+                    name: this.selected_cc,
+                    data: this.cc_data,
                 },
                 {
-                    name: this.selected_cc,
-                    data: this.data2,
+                    name: `r/${this.selected_reddit}`,
+                    data: this.subr_data,
                 },
             ]
         },
     },
     methods: {
-        resetData() {
-            this.data1 = this.data1.map(x => Math.floor(100*Math.random()))
-            this.data2 = this.data2.map(x => Math.floor(1000*Math.random()))
+        async loadRedditData(subreddit) {
+            const docRef = doc(db, "reddit", "doc", "history", subreddit);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {this.subr_data = process_time_series(docSnap.data());}
+            else {console.log("Couldn't load subreddit data");}
+        },
+        async loadCCData(crypto) {
+            const docRef = doc(db, "crypto", "doc", "history", this.cc[crypto]);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {this.cc_data = process_time_series(docSnap.data());}
+            else {console.log("Couldn't load crypto data");}
         }
     }
 
@@ -107,15 +137,16 @@ export default {
     <div class="flex pt-2 justify-center items-center gap-4">
         <!-- Reddit Selection -->
         <Listbox as="div" v-model="selected_reddit">
-            <ListboxButton class="py-1 px-3 rounded-lg bg-dark-700">{{selected_reddit}}</ListboxButton>
+            <ListboxButton class="py-1 px-3 rounded-lg bg-dark-700">r/{{selected_reddit}}</ListboxButton>
             <ListboxOptions class="py-1 px-3 rounded-lg bg-dark-700 absolute z-40">
                 <ListboxOption
-                    v-for="r in reddits"
-                    :key="r"
+                    v-for="[id, r] of Object.entries({... assoc_subr, ... inde_subr})"
+                    :key="id"
                     :value="r"
+                    @click="loadRedditData(r)"
                     class="cursor-pointer"
                 >
-                    {{ r }}
+                    r/{{ r }}
                 </ListboxOption>
             </ListboxOptions>
         </Listbox>
@@ -124,11 +155,13 @@ export default {
         <!-- CC Selection -->
         <Listbox as="div" v-model="selected_cc">
             <ListboxButton class="py-1 px-3 rounded-lg bg-dark-700">{{selected_cc}}</ListboxButton>
-            <ListboxOptions class="py-1 px-3 rounded-lg bg-dark-700 absolute">
+            <ListboxOptions class="py-1 px-3 rounded-lg bg-dark-700 absolute z-40">
                 <ListboxOption
-                    v-for="crypto in cc"
-                    :key="crypto"
+                    v-for="[crypto, id] of Object.entries(cc)"
+                    :key="id"
                     :value="crypto"
+                    @click="loadCCData(crypto)"
+                    class="cursor-pointer"
                 >
                     {{ crypto }}
                 </ListboxOption>
@@ -137,7 +170,7 @@ export default {
     </div>
     <!-- Data -->
     <apexchart
-        width="999"
+        width="1000"
         type="line"
         :options="chartOptions"
         :series="series"
