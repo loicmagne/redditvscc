@@ -18,7 +18,6 @@ function process_time_series(ts){
             })
         }
     }
-    console.log(data)
     data = data.sort(ts_point_compare);
     return data
 }
