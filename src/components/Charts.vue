@@ -223,7 +223,7 @@ export default {
     </div>
     <!-- Data -->
     <apexchart
-        width="1000"
+        width="1100"
         type="line"
         :options="chartOptions"
         :series="series"
