@@ -5,6 +5,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      width: {
+        '128': '1100px',
+      },
       colors: {
         dark: {
           50: "#383838",

@@ -222,12 +222,14 @@ export default {
         </svg>
     </div>
     <!-- Data -->
-    <apexchart
-        width="1100"
-        type="line"
-        :options="chartOptions"
-        :series="series"
-    ></apexchart>
+    <div class="lg:w-128 w-screen">
+        <apexchart
+            width="100%"
+            type="line"
+            :options="chartOptions"
+            :series="series"
+        ></apexchart>
+    </div>
 
     <!-- Options -->
     <div class="flex flex-row gap-2">
