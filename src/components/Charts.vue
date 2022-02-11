@@ -234,9 +234,9 @@ export default {
     <!-- Options -->
     <div class="flex flex-row gap-2">
         <!-- Timeframe selection -->
-        <Listbox as="div" v-model="interval">
+        <Listbox as="div" v-model="interval" class="relative">
             <ListboxButton class="px-2 rounded-lg bg-dark-400">timeframe: {{interval}}</ListboxButton>
-            <ListboxOptions class="px-2 rounded-lg bg-dark-700 absolute z-40">
+            <ListboxOptions class="px-2 rounded-lg bg-dark-700 bottom-6 absolute z-40">
                 <ListboxOption
                     v-for="[tf, nb] of Object.entries(timeframes)"
                     :key="nb"
