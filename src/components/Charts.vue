@@ -69,7 +69,7 @@ export default {
                     },
                     toolbar: {
                         show: false,
-                    },
+                    }
                 },
                 stroke: {
                     curve: 'straight',
@@ -97,7 +97,9 @@ export default {
                     tickAmount: 10,
                     title: {
                         text: 'USD',
-                    }
+                    },
+                    min: this.cc_min - this.cc_range * 0.05,
+                    max: this.cc_max + this.cc_range * 0.05,
                 },{
                     decimalsInFloat: 0,
                     opposite: true,
@@ -110,7 +112,9 @@ export default {
                     tickAmount: 10,
                     title: {
                         text: 'Active Members',
-                    }
+                    },
+                    min: this.subr_min - this.subr_range * 0.05,
+                    max: this.subr_max + this.subr_range * 0.05,
                 }],
                 legend: {
                 fontSize: "16px"
@@ -134,10 +138,20 @@ export default {
                 },
             ]
         },
+        // Lists
         cc_list() {return Object.keys(this.cc)},
         subr_list() {return Object.keys({... this.assoc_subr, ... this.inde_subr})},
+        // Number of subreddits/cryptos
         cc_len() {return this.cc_list.length},
         subr_len() {return this.subr_list.length},
+        // Ranges of crypto prices / subreddit active members
+        cc_min() {return this.cc_data.slice(-this.timeframe).reduce((_old, _new) => Math.min(_old, _new.y), Number.MAX_VALUE)},
+        cc_max() {return this.cc_data.slice(-this.timeframe).reduce((_old, _new) => Math.max(_old, _new.y), 0)},
+        cc_range() {return this.cc_max - this.cc_min},
+        subr_min() {return this.subr_data.slice(-this.timeframe).reduce((_old, _new) => Math.min(_old, _new.y), Number.MAX_VALUE)},
+        subr_max() {return this.subr_data.slice(-this.timeframe).reduce((_old, _new) => Math.max(_old, _new.y), 0)},
+        subr_range() {return this.subr_max - this.subr_min},
+
         min_length() {
             // Return the size of the intersection of the intervals of cc_data and subr_data
             return Math.min(this.cc_data.length, this.subr_data.length)
